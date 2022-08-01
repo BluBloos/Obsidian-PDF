@@ -46,7 +46,7 @@ export default class ObsidianPDF extends Plugin {
             const transformations = pdf2md.makeTransformations(fonts.map);
             const parseResult = pdf2md.transform(pages, transformations);*/
             // var resultMD = await pdf2md(buffer); 
-            var resultMD = "# Some Heading";
+            var resultMD = "Here is some text that is meant to represent the PDF text.";
             /*parseResult.pages
                 // @ts-ignore
                 .map(page => page.items.join('\n')) // typescript is ignored on this line.
@@ -62,15 +62,18 @@ export default class ObsidianPDF extends Plugin {
 		if (fileExists) {
 			await this.overwriteFile(filePath, mdString);
 		} else {
-			await this.app.vault.create(filePath, mdString);
+			await this.app.vault.create(filePath, mdString + "\n# PDF Metadata\n");
 		}
 	}
 
+    /*
+     * TODO(Noah): Can we do some Git magic to replace just those places in the document that
+     * pertain to the PDF, and leave whatever annotations that you written it?
+     */
 	async overwriteFile(filePath: string, note: string) {
 		let existingContent = await this.app.vault.adapter.read(filePath);
-		if(existingContent.length > 0) {
-			existingContent = existingContent + '\r\r'; // reset to beginning of text.
-		}
-		await this.app.vault.adapter.write(filePath, existingContent + note);
+        let _existingContent = existingContent.split("# PDF Metadata");
+        let userContent = (_existingContent.length > 1) ? _existingContent[1] : "";
+		await this.app.vault.adapter.write(filePath, note + "\n# PDF Metadata" + userContent);
 	}
 };
