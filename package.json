@@ -15,8 +15,10 @@
   },
   "homepage": "https://github.com/BluBloos/Obsidian-PDF#readme",
   "dependencies": {
+    "@opendocsg/pdf2md": "^0.1.25",
     "builtin-modules": "^3.3.0",
     "esbuild": "^0.14.51",
-    "obsidian": "^0.15.4"
+    "obsidian": "^0.15.4",
+    "pdfjs-dist": "^2.15.349"
   }
 }
