@@ -20,8 +20,8 @@ esbuild.build({
 		'obsidian',
 		'electron',
 		...builtins],
-	format: 'cjs',
-	target: 'es2016',
+	format: 'cjs', /* as pertaining to output javascript */
+	target: 'es2016', /* as pertaining to output javascript */
 	logLevel: "info",
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true, /* get ride of unused code ... */
