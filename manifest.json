@@ -1,0 +1,11 @@
+{
+    "id": "obsidian-pdf",
+    "name": "Obsidian-PDF",
+    "author": "Noah Cabral",
+    "version": "0.0.0",
+    "minAppVersion": "0.11.13",
+    "description": "Treats PDF files as first-class citizens.",
+    "authorUrl": "https://github.com/BluBloos/Obsidian-PDF",
+    "isDesktopOnly": true,
+    "js": "main.js"
+}

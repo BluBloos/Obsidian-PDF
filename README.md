@@ -23,3 +23,9 @@ Plugin to enable PDF files as first class citizens within an Obsidian vault.
 - Everything that you would expect to work on iPad works.
   - Wikilinks work.
   - As you browse through files on the iPad, Obsidian on macOS follows.
+
+## The Tech
+
+- Typescript is a language built on type of Javascript to allow for typing annotation.
+- We are using the plain old typescript compiler via cli command `tsc`.
+- Using esbuild, which is a bundler. By definition this combines many javascript files into just one for loading into the browser.

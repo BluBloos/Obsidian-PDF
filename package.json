@@ -1,0 +1,22 @@
+{
+  "name": "obsidian-pdf",
+  "version": "0.0.0",
+  "description": "Treats PDF files as first-class citizens.",
+  "scripts": {
+    "build": "tsc -noEmit -skipLibCheck && node build.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BluBloos/Obsidian-PDF.git"
+  },
+  "author": "Noah Cabral",
+  "bugs": {
+    "url": "https://github.com/BluBloos/Obsidian-PDF/issues"
+  },
+  "homepage": "https://github.com/BluBloos/Obsidian-PDF#readme",
+  "dependencies": {
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.14.51",
+    "obsidian": "^0.15.4"
+  }
+}

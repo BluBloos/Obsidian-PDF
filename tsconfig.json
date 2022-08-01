@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "outDir": "bin",
+        "baseUrl": ".", /* module search path for relative module paths */
+        "module": "ESNext", /* affects the module system which pertains to how we organize and connect our source code */
+        "target": "ES6", /* target version of javascript to compile to */
+        "moduleResolution": "node", /* pertains to how the compiler searches for modules */
+        "noImplicitAny": true, /* typescript complains if you did not provide type annoatation */
+        "removeComments": true,
+        "preserveConstEnums": true, /* const enums provide a way to reduce the overall memory footprint of your application at runtime by emitting the enum value instead of a reference. */
+        "sourceMap": true, /* output source map debug info */
+        "lib": [ /* type script type definition to use */
+            "DOM",
+            "ES5",
+            "ES6",
+            "ES7"
+          ]
+    },
+    "files": [
+        "src/main.ts"
+    ]
+}
