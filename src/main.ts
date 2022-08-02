@@ -1,4 +1,4 @@
-import { addIcon, Plugin} from 'obsidian';
+import { addIcon, Plugin, TFile } from 'obsidian';
 //import pdf2md from '@opendocsg/pdf2md'
 import * as pdfjs from "pdfjs-dist";
 import * as worker from "pdfjs-dist/build/pdf.worker.entry.js";
@@ -18,6 +18,32 @@ inside your plugin. The App interface provides accessors for the following inter
 // Workspace -> for giving a two-pane experience when looking at .pdf viles in the vault.
 export default class ObsidianPDF extends Plugin {
 
+    // TODO: On opening of a .md file ->
+    // want to find the corresponding .pdf and open that in a dual pane.
+
+    /* 
+        - If you need to open a new file or navigate a view, use {@link getLeaf}.
+        - looks like there is a on 'file-open' event.
+        - for new file creation: this.app.vault.on('create', ...
+    */
+
+    /*
+     * returns true if the file belongs to a .PDF/.md file pair.
+     */
+    belongsToPair(file : TFile) : boolean {
+        if (file != null) {
+            if (file.extension === 'pdf') return true;
+            if (file.extension === 'md') {
+                // Need to do some more work.
+                // Search through the vault to determine if their is a corresponding .pdf file.
+                // TODO: Make this faster by leveraging some form of indexing.
+                
+                return false; // this is currently a mock implementation.
+            }
+        }
+        return false;
+    }
+
     async onload() {
         pdfjs.GlobalWorkerOptions.workerSrc = worker;
 		this.addRibbonIcon('extract', 'PDF to Markdown', 
@@ -25,6 +51,43 @@ export default class ObsidianPDF extends Plugin {
                 this.extract();
             }
         );
+
+        this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf) => {
+            console.log("active-leaf-change event triggered");
+            console.log("leaf type = ", leaf.getViewState().type);
+        }));
+
+        this.registerEvent(this.app.workspace.on('file-open', (file) => {
+            console.log('file-open event triggered');
+            var isFileClose = false;
+            if (this.app.workspace.activeLeaf != null) {
+                if (this.app.workspace.activeLeaf.getViewState().type == "empty") isFileClose = true;
+            }
+            /*if (isFileClose) {
+                // Does the file belong to a pair?
+                if (this.belongsToPair(file)) {
+                    // Close the two pdf and markdown leafs.
+                }
+            } else {
+            }*/
+            if (file != null && !isFileClose) {
+                if (file.extension === 'pdf') {
+                    // We automatically know that we need to open the companion .md
+                    const mdFilePath = file.name.replace(".pdf", ".md");
+                    let newLeaf = true;
+                    this.app.workspace.iterateAllLeaves((leaf) => {
+                        console.log(leaf.getViewState().type);
+                        // If we find any existing markdown views, no need to create
+                        // a new leaf.
+                        if (leaf.getViewState().type == "markdown") {
+                            newLeaf = false;
+                        }
+                    });
+                    this.app.workspace.openLinkText(mdFilePath, '' /* source path */, newLeaf);
+                    console.log("opening", mdFilePath);
+                }
+            }
+        }));
     }
 
     async extract()  {
@@ -77,3 +140,11 @@ export default class ObsidianPDF extends Plugin {
 		await this.app.vault.adapter.write(filePath, note + "\n# PDF Metadata" + userContent);
 	}
 };
+
+// Alas. Things are not as simple as they seem. We must be more careful here.
+// I'm thinking that we maybe have a, "pair is open". Idea going on. My own state
+// management type thing.
+//
+//  Of course, we have to consider the user reloading the plugin randomly. 
+//  Which means that maybe on load we also make sure to check the open leafs for a pair -> 
+//  and adjust the state accordingly -> so that state is ALWAYS valid.
