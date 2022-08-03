@@ -1,4 +1,7 @@
 // TODO(Noah): Fig bug where things are not working if we have opened Obsidian and a "PDF file" is already open.
+// TODO(Noah): Add automatic extraction to .md from .pdf when a .pdf file has changed.
+// TODO(Noah): When opening a .pdf and the .md is corrupted (no header) ... overwrite with PDF extraction.
+// TODO(Noah): Consider if overrwriting corrupted .md companions is the right play -> but for now, gets things work for us QUICK.
 
 import { addIcon, FileView, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 //import pdf2md from '@opendocsg/pdf2md'
@@ -73,6 +76,12 @@ export default class ObsidianPDF extends Plugin {
                         this.mdFile = (this.app.workspace.activeLeaf.view as FileView).file;
                         console.log("this.pdfFile:", this.pdfFile);
                         console.log("this.mdFile:", this.mdFile);
+                        // check to see if we need to overwrite the mdFile
+                        this.app.vault.adapter.read(mdFilePath).then(mdFileStr => {
+                            if (!mdFileStr.includes("# PDF Metadata")) {
+                                this.extract();
+                            }
+                        });
                     });
                 } else if (leaf.getViewState().type == "markdown") {
                     // Does this markdown file link with a .PDF ?
@@ -100,33 +109,35 @@ export default class ObsidianPDF extends Plugin {
     }
 
     async extract()  {
-		let file = this.app.workspace.getActiveFile();
-		if(file === null) return;
-		if(file.extension !== 'pdf') return;
-        let arrayBuffer = await this.app.vault.readBinary(file);
-        console.log("typeof arrayBuffer === \"object\"", typeof arrayBuffer === "object");
-        console.log("arrayBuffer !== null", arrayBuffer !== null);
-        console.log("arrayBuffer.byteLength", arrayBuffer.byteLength !== undefined);
-        const buffer = Buffer.from(arrayBuffer);
-        /* PDF.js uses promises and .getDocument() returns a PDFDocumentLoadingTask instance that has 
-            a promise property */
-		let doc = await pdfjs.getDocument(buffer).promise;
-		// pdf2md stuff -> see: https://github.com/opendocsg/pdf2md/blob/master/lib/pdf2md.js
-        {
-            /*let result = await pdf2md.parse(doc);
-            const {fonts, pages} = result;
-            const transformations = pdf2md.makeTransformations(fonts.map);
-            const parseResult = pdf2md.transform(pages, transformations);*/
-            // var resultMD = await pdf2md(buffer); 
-            var resultMD = "Here is some text that is meant to represent the PDF text.";
-            /*parseResult.pages
-                // @ts-ignore
-                .map(page => page.items.join('\n')) // typescript is ignored on this line.
-                .join('---\n\n'); */
+        if (this.pairOpen) {
+            let file = this.pdfFile;
+            if(file === null) return;
+            if(file.extension !== 'pdf') return;
+            let arrayBuffer = await this.app.vault.readBinary(file);
+            console.log("typeof arrayBuffer === \"object\"", typeof arrayBuffer === "object");
+            console.log("arrayBuffer !== null", arrayBuffer !== null);
+            console.log("arrayBuffer.byteLength", arrayBuffer.byteLength !== undefined);
+            const buffer = Buffer.from(arrayBuffer);
+            /* PDF.js uses promises and .getDocument() returns a PDFDocumentLoadingTask instance that has 
+                a promise property */
+            let doc = await pdfjs.getDocument(buffer).promise;
+            // pdf2md stuff -> see: https://github.com/opendocsg/pdf2md/blob/master/lib/pdf2md.js
+            {
+                /*let result = await pdf2md.parse(doc);
+                const {fonts, pages} = result;
+                const transformations = pdf2md.makeTransformations(fonts.map);
+                const parseResult = pdf2md.transform(pages, transformations);*/
+                // var resultMD = await pdf2md(buffer); 
+                var resultMD = "Here is some text that is meant to represent the PDF text.";
+                /*parseResult.pages
+                    // @ts-ignore
+                    .map(page => page.items.join('\n')) // typescript is ignored on this line.
+                    .join('---\n\n'); */
+            }
+            const mdFilePath = file.name.replace(".pdf", ".md");
+            await this.saveToFile(mdFilePath, resultMD);
+
         }
-        const mdFilePath = file.name.replace(".pdf", ".md");
-        await this.saveToFile(mdFilePath, resultMD);
-        await this.app.workspace.openLinkText(mdFilePath, '' /* source path */, true /* is new leaf */);
 	}
 
     async saveToFile(filePath: string, mdString: string) {
