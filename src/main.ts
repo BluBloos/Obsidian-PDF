@@ -1,6 +1,6 @@
 // TODO(Noah): Fig bug where things are not working if we have opened Obsidian and a "PDF file" is already open.
-// TODO(Noah): Add automatic extraction to .md from .pdf when a .pdf file has changed.
 // TODO(Noah): Consider if overrwriting corrupted .md companions is the right play -> but for now, gets things work for us QUICK.
+// TODO(Noah): Fix bug where PDF -> PDF file opening no work.
 
 import { addIcon, FileView, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 //import pdf2md from '@opendocsg/pdf2md'
@@ -20,6 +20,52 @@ export default class ObsidianPDF extends Plugin {
         return this.pairOpen;
     }
 
+    freshOpenMdPdf(leaf : WorkspaceLeaf) {
+        if (leaf.getViewState().type == "pdf") {
+            this.pairOpen = true;
+            // We automatically know that we need to open the companion .md
+            const mdFilePath = (leaf.view as FileView).file.name.replace(".pdf", ".md");
+            let newLeaf = true;
+            this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
+                if (leaf.getViewState().type == "markdown") {
+                    newLeaf = false;
+                }
+            });
+            this.app.workspace.openLinkText(mdFilePath, '', newLeaf).then(()=> {  
+                this.pdfFile = (leaf.view as FileView).file;
+                this.mdFile = (this.app.workspace.activeLeaf.view as FileView).file;
+                console.log("this.pdfFile:", this.pdfFile);
+                console.log("this.mdFile:", this.mdFile);
+                // check to see if we need to overwrite the mdFile
+                this.app.vault.adapter.read(mdFilePath).then((mdFileStr : string) => {
+                    if (!mdFileStr.includes("# PDF Metadata")) {
+                        this.extract();
+                    }
+                });
+            });
+        } else if (leaf.getViewState().type == "markdown") {
+            // Does this markdown file link with a .PDF ?
+            const pdfFilePath = (leaf.view as FileView).file.name.replace(".md", ".pdf");
+            let pdfFile = this.app.metadataCache.getFirstLinkpathDest(pdfFilePath, "");
+            if (pdfFile != null) {
+                this.pairOpen = true;
+                let newLeaf = true;
+                this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
+                    if (leaf.getViewState().type == "pdf") {
+                        newLeaf = false;
+                    }
+                });
+                // Open it up!
+                this.app.workspace.openLinkText(pdfFilePath, '', newLeaf).then(()=> {
+                    this.pdfFile = (this.app.workspace.activeLeaf.view as FileView).file;
+                    this.mdFile = (leaf.view as FileView).file;
+                    console.log("this.pdfFile:", this.pdfFile);
+                    console.log("this.mdFile:", this.mdFile);
+                });
+            }
+        }
+    }
+
     async onload() {
         
         this.pairOpen = false;
@@ -31,7 +77,7 @@ export default class ObsidianPDF extends Plugin {
             console.log("active-leaf-change event triggered with leaf type = ", leaf.getViewState().type);
             if (this.isPairOpen()) {
                 let foundMdLeaf = (this.mdFile == null) ? true : false;
-                let foundPdfLeaf =(this.pdfFile == null) ? true : false;
+                let foundPdfLeaf = (this.pdfFile == null) ? true : false;
                 // Check all leaves to see if our files still exist.
                 this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
                     if (leaf.getViewState().type === "pdf" || leaf.getViewState().type === "markdown") {
@@ -59,51 +105,13 @@ export default class ObsidianPDF extends Plugin {
                     this.pdfFile = null;
                     this.mdFile = null;
                     this.pairOpen = false;
-                }
-            } else {
-                if (leaf.getViewState().type == "pdf") {
-                    this.pairOpen = true;
-                    // We automatically know that we need to open the companion .md
-                    const mdFilePath = (leaf.view as FileView).file.name.replace(".pdf", ".md");
-                    let newLeaf = true;
-                    this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
-                        if (leaf.getViewState().type == "markdown") {
-                            newLeaf = false;
-                        }
-                    });
-                    this.app.workspace.openLinkText(mdFilePath, '', newLeaf).then(()=> {  
-                        this.pdfFile = (leaf.view as FileView).file;
-                        this.mdFile = (this.app.workspace.activeLeaf.view as FileView).file;
-                        console.log("this.pdfFile:", this.pdfFile);
-                        console.log("this.mdFile:", this.mdFile);
-                        // check to see if we need to overwrite the mdFile
-                        this.app.vault.adapter.read(mdFilePath).then(mdFileStr => {
-                            if (!mdFileStr.includes("# PDF Metadata")) {
-                                this.extract();
-                            }
-                        });
-                    });
-                } else if (leaf.getViewState().type == "markdown") {
-                    // Does this markdown file link with a .PDF ?
-                    const pdfFilePath = (leaf.view as FileView).file.name.replace(".md", ".pdf");
-                    let pdfFile = this.app.metadataCache.getFirstLinkpathDest(pdfFilePath, "");
-                    if (pdfFile != null) {
-                        this.pairOpen = true;
-                        let newLeaf = true;
-                        this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
-                            if (leaf.getViewState().type == "pdf") {
-                                newLeaf = false;
-                            }
-                        });
-                        // Open it up!
-                        this.app.workspace.openLinkText(pdfFilePath, '', newLeaf).then(()=> {
-                            this.pdfFile = (this.app.workspace.activeLeaf.view as FileView).file;
-                            this.mdFile = (leaf.view as FileView).file;
-                            console.log("this.pdfFile:", this.pdfFile);
-                            console.log("this.mdFile:", this.mdFile);
-                        });
+                    if (leaf.getViewState().type === "pdf" || leaf.getViewState().type === "markdown") {
+                        // Need to reinvoke a leaf change arbitrarily.
+                        this.freshOpenMdPdf(leaf);
                     }
                 }
+            } else {
+                this.freshOpenMdPdf(leaf);
             }
         }));
     }
