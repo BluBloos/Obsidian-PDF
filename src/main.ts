@@ -1,14 +1,19 @@
-// TODO(Noah): Fig bug where things are not working if we have opened Obsidian and a "PDF file" is already open.
-// TODO(Noah): Consider if overrwriting corrupted .md companions is the right play -> but for now, this gets things working for us QUICK.
-
-/* Work currently in progress before we can call this a proper plugin. */
+/* Things to fix before publishing as a legit Obsidian plugin. */
+// TODO(Noah): If the PDF file has changed since last, rerun the extract algo. Remove the overwrite (should never 
+// overwrite the data of users).
+// TODO(Noah): Add unload and remove all our hooks.
+// TODO(Noah): Remove all uses of Workspace.activeLeaf.
+// TODO(Noah): If we can, get ride of all use cases of .adapter
+// TODO(Noah): Remove things from the bundle if you can -> esbuild exclude stuff.
+// TODO(Noah): Do we have any .then() that we can get rid of and instead have as a await ?
+// TODO(Noah): Add eslint to our build process to have it give us suggestions for how to improve.
+/* Things to fix before publishing as a legit Obsidian plugin. */
 
 // TODO(Noah): The worker.js of pdfjs should be bundled with our app over retrieving from a CDN.
-// -> this place a requirement for our plugin users to have an internet connection.
-
-// TODO(Noah): When there is major loading going on ... put a loading bar thing in.
-
-// TODO(Noah): Figure out how to enable headers to work for us (like some handwritten format that we look out for).
+// -> this places a requirement for our plugin users to have an internet connection.
+// TODO(Noah): Fig bug where things are not working if we have opened Obsidian and a "PDF file" is already open.
+// TODO(Noah): Figure out how we can sensibly do headers.
+// TODO(Noah): When there is major loading going on ... add a loading bar.
 
 import { addIcon, FileView, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 //import pdf2md from '@opendocsg/pdf2md'
