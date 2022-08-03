@@ -1,12 +1,12 @@
 // TODO(Noah): Fig bug where things are not working if we have opened Obsidian and a "PDF file" is already open.
 // TODO(Noah): Add automatic extraction to .md from .pdf when a .pdf file has changed.
-// TODO(Noah): When opening a .pdf and the .md is corrupted (no header) ... overwrite with PDF extraction.
 // TODO(Noah): Consider if overrwriting corrupted .md companions is the right play -> but for now, gets things work for us QUICK.
 
 import { addIcon, FileView, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 //import pdf2md from '@opendocsg/pdf2md'
 import * as pdfjs from "pdfjs-dist";
-import * as worker from "pdfjs-dist/build/pdf.worker.entry.js";
+//import * as worker from "pdfjs-dist/build/pdf.worker.entry.js";
+import { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
 
 addIcon('extract', '<path d="M16 71.25L16 24.5C16 19.8056 19.8056 16 24.5 16L71.25 16C75.9444 16 79.75 19.8056 79.75 24.5L79.75 41.5L71.25 41.5L71.25 24.5L24.5 24.5L24.5 71.25L41.5 71.25L41.5 79.75L24.5 79.75C19.8056 79.75 16 75.9444 16 71.25ZM42.7452 48.725L48.7547 42.7325L75.5 69.4778L75.5 54.25L84 54.25L84 84L54.25 84L54.25 75.5L69.4862 75.5L42.7452 48.725Z" fill="white" fill-opacity="0.5"/>')
 
@@ -25,7 +25,7 @@ export default class ObsidianPDF extends Plugin {
         this.pairOpen = false;
         this.pdfFile = null;
         this.mdFile = null;
-        pdfjs.GlobalWorkerOptions.workerSrc = worker;
+        pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.worker.js";
 
         this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf : WorkspaceLeaf) => {
             console.log("active-leaf-change event triggered with leaf type = ", leaf.getViewState().type);
@@ -118,25 +118,31 @@ export default class ObsidianPDF extends Plugin {
             console.log("arrayBuffer !== null", arrayBuffer !== null);
             console.log("arrayBuffer.byteLength", arrayBuffer.byteLength !== undefined);
             const buffer = Buffer.from(arrayBuffer);
-            /* PDF.js uses promises and .getDocument() returns a PDFDocumentLoadingTask instance that has 
-                a promise property */
             let doc = await pdfjs.getDocument(buffer).promise;
-            // pdf2md stuff -> see: https://github.com/opendocsg/pdf2md/blob/master/lib/pdf2md.js
-            {
-                /*let result = await pdf2md.parse(doc);
-                const {fonts, pages} = result;
-                const transformations = pdf2md.makeTransformations(fonts.map);
-                const parseResult = pdf2md.transform(pages, transformations);*/
-                // var resultMD = await pdf2md(buffer); 
-                var resultMD = "Here is some text that is meant to represent the PDF text.";
-                /*parseResult.pages
+            let resultMD = "";
+            console.log("doc.numPages", doc.numPages);
+            for (let i : number = 1; i <= doc.numPages; i++) {
+                let page : PDFPageProxy = await doc.getPage(i);
+                // debug time!
+                let annotations = page.getAnnotations();
+                console.log("annotations", annotations);
+                let structTree = await page.getStructTree();
+                console.log("structTree", structTree);
+                // process page
+                let textContent = await page.getTextContent();
+                console.log("textContent", textContent); 
+                textContent.items.forEach(item => {
                     // @ts-ignore
-                    .map(page => page.items.join('\n')) // typescript is ignored on this line.
-                    .join('---\n\n'); */
+                    if (item.str != undefined) {
+                        // @ts-ignore
+                        resultMD += item.str + ' ';
+                    }
+                });
+                // TODO: Add the marked content consideration.
+                resultMD += "\n\n---\n\n"; // proper markdown divider.
             }
             const mdFilePath = file.name.replace(".pdf", ".md");
             await this.saveToFile(mdFilePath, resultMD);
-
         }
 	}
 
