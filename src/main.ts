@@ -1,6 +1,14 @@
 // TODO(Noah): Fig bug where things are not working if we have opened Obsidian and a "PDF file" is already open.
-// TODO(Noah): Consider if overrwriting corrupted .md companions is the right play -> but for now, gets things work for us QUICK.
-// TODO(Noah): Fix bug where PDF -> PDF file opening no work.
+// TODO(Noah): Consider if overrwriting corrupted .md companions is the right play -> but for now, this gets things working for us QUICK.
+
+/* Work currently in progress before we can call this a proper plugin. */
+
+// TODO(Noah): The worker.js of pdfjs should be bundled with our app over retrieving from a CDN.
+// -> this place a requirement for our plugin users to have an internet connection.
+
+// TODO(Noah): When there is major loading going on ... put a loading bar thing in.
+
+// TODO(Noah): Figure out how to enable headers to work for us (like some handwritten format that we look out for).
 
 import { addIcon, FileView, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 //import pdf2md from '@opendocsg/pdf2md'
@@ -18,6 +26,21 @@ export default class ObsidianPDF extends Plugin {
 
     isPairOpen() : boolean {
         return this.pairOpen;
+    }
+
+    prettyPrintMd(md : string) {
+        let mdPretty : string = "";
+        // Go through string to ensure that there are never consecutive space characters.
+        for (let i : number = 0; i < md.length; i++) {
+            let b = md.charAt(i) == ' ' && mdPretty.endsWith(" ");
+            if (!b) {
+                mdPretty += md.charAt(i);
+            }           
+        }
+        // Collapse wikilinks. 
+        // @ts-ignore
+        mdPretty = mdPretty.replaceAll("[ [", "[[").replaceAll("] ]", "]]")
+        return mdPretty;
     }
 
     freshOpenMdPdf(leaf : WorkspaceLeaf) {
@@ -130,6 +153,7 @@ export default class ObsidianPDF extends Plugin {
             let resultMD = "";
             console.log("doc.numPages", doc.numPages);
             for (let i : number = 1; i <= doc.numPages; i++) {
+                resultMD += `\n# Page ${i}\n`; // Page divider.
                 let page : PDFPageProxy = await doc.getPage(i);
                 // debug time!
                 let annotations = page.getAnnotations();
@@ -146,11 +170,10 @@ export default class ObsidianPDF extends Plugin {
                         resultMD += item.str + ' ';
                     }
                 });
-                // TODO: Add the marked content consideration.
-                resultMD += "\n\n---\n\n"; // proper markdown divider.
+                // TODO(Noah): Add the marked content consideration.
             }
             const mdFilePath = file.name.replace(".pdf", ".md");
-            await this.saveToFile(mdFilePath, resultMD);
+            await this.saveToFile(mdFilePath, this.prettyPrintMd(resultMD));
         }
 	}
 
