@@ -1,8 +1,7 @@
 /* Things to fix before publishing as a legit Obsidian plugin. */
 // TODO(Noah): If the PDF file has changed since last, rerun the extract algo. Remove the overwrite (should never 
 // overwrite the data of users).
-// TODO(Noah): Remove all uses of Workspace.activeLeaf.
-// TODO(Noah): If we can, get ride of all use cases of .adapter
+// TODO(Noah): If we can, get rid of all use cases of .adapter
 // TODO(Noah): Remove things from the bundle if you can -> esbuild exclude stuff.
 // TODO(Noah): Do we have any .then() that we can get rid of and instead have as a await ?
 // TODO(Noah): Add eslint to our build process to have it give us suggestions for how to improve.
@@ -60,7 +59,7 @@ export default class ObsidianPDF extends Plugin {
             });
             this.app.workspace.openLinkText(mdFilePath, '', newLeaf).then(()=> {  
                 this.pdfFile = (leaf.view as FileView).file;
-                this.mdFile = (this.app.workspace.activeLeaf.view as FileView).file;
+                this.mdFile = this.app.workspace.getActiveViewOfType(FileView).file;
                 console.log("this.pdfFile:", this.pdfFile);
                 console.log("this.mdFile:", this.mdFile);
                 // check to see if we need to overwrite the mdFile
@@ -84,7 +83,7 @@ export default class ObsidianPDF extends Plugin {
                 });
                 // Open it up!
                 this.app.workspace.openLinkText(pdfFilePath, '', newLeaf).then(()=> {
-                    this.pdfFile = (this.app.workspace.activeLeaf.view as FileView).file;
+                    this.pdfFile = this.app.workspace.getActiveViewOfType(FileView).file;
                     this.mdFile = (leaf.view as FileView).file;
                     console.log("this.pdfFile:", this.pdfFile);
                     console.log("this.mdFile:", this.mdFile);
