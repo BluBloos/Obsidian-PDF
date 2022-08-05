@@ -1,7 +1,6 @@
 /* Things to fix before publishing as a legit Obsidian plugin. */
 // TODO(Noah): If the PDF file has changed since last, rerun the extract algo. Remove the overwrite (should never 
 // overwrite the data of users).
-// TODO(Noah): Remove things from the bundle if you can -> esbuild exclude stuff.
 // TODO(Noah): Add eslint to our build process to have it give us suggestions for how to improve.
 /* Things to fix before publishing as a legit Obsidian plugin. */
 
