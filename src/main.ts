@@ -1,7 +1,3 @@
-/* Things to fix before publishing as a legit Obsidian plugin. */
-// TODO(Noah): Remove all cases of user data loss.
-/* Things to fix before publishing as a legit Obsidian plugin. */
-
 // TODO(Noah): The worker.js of pdfjs should be bundled with our app over
 //     retrieving from a CDN as this places a requirement for our plugin users
 //     to have an internet connection.
@@ -10,18 +6,6 @@
 // TODO(Noah): Figure out how we can sensibly do headers.
 // TODO(Noah): When there is major loading going on ... add a loading bar.
 //     i.e. change the semantics surrounding plugin speed impact.
-
-/*
-How should the PDF updating process work?
-- We have access to the file modified time.
-- We could store a thing in our app memory -> last time that WE,
-the Obsidian-PDF plugin, have processed the PDF.
-- We simply need to compare the modified time with the time
-that we have recorded to see if they are different. If they are,
-do the extract and update the mtime cache.
-- We're not going to register any hooks. Simply run this logic
-whenever we open a "PDF object".
-*/
 
 import
 {addIcon, FileView, Plugin, TFile, WorkspaceLeaf, Notice} from 'obsidian';

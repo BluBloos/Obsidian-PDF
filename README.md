@@ -1,33 +1,15 @@
 # Obsidian-PDF
 Plugin to enable PDF files as first class citizens within an Obsidian vault.
 
-## The How
+## What does this plugin do for me?
 
-- PDFs are stored as symbolic links within the vault.
-  - This enables another tool more suited to editing PDFs manage the files where and how it pleases.
- 
----
+- All PDF files in your vault will be paired with auto-generated .md files.
+- Everytime the PDF file is updated, so is the .md file.
+- Opening either file within a pairing will open both files in a dual-pane
+editing view within Obsidian.
+- You may include custom data within the .md, just ensure to place it after
+the "PDF Metadata" heading.
+- Any data within the .md that comes before this heading is volatile and will
+be overwritten each time the PDF changes.
 
-- PDFs show in the Obsidian File explorer when browsing the vault.
-- The PDF file name is used as the "note" name.
-- You can open a PDF file to view it.
-- Clicking "edit" invokes iPad for Apple Pencil drawing experience.
-- PDFs can contain wikilinks (hand-drawn). Clicking on them will traverse the Obsidian graph like normal.
-- PDF to markdown technology is a supported mode of PDF viewing (as a mode, it can mimized if desired). This mode presents the transcribed text to the right of the PDF in a dual pane configuration.
-  - In this mode, we are free to add text below the transcibed text. The transcibed text is locked and fully linked with the PDF contents, i.e. it is only editable by editing the PDF itself.
-- The existence of the transcibed text enables text-searching for PDFs (or maybe the PDFS are already composed of text by nature of the external drawing tool).
-- As you edit PDFs on the iPad, these update in realtime when inside Obsidian on macOS (we suspect this will be accomplished via iCloud sync).
-
----
-
-- Everything that you would expect to work on iPad works.
-  - Wikilinks work.
-  - As you browse through files on the iPad, Obsidian on macOS follows.
-
-## The Tech
-
-- Typescript is a language built on type of Javascript to allow for typing annotation.
-- We are using the plain old typescript compiler via cli command `tsc`.
-- Using esbuild, which is a bundler. By definition this combines many javascript files into just one for loading into the browser.
-- "esbuild has built-in support for TypeScript. It can compile TypeScript to JavaScript but it does not perform type checking."
-- In our typescript compile we do -skipLibCheck, this is saying, "Don't type check the libs that I link against. Just my code".
+Please use this plugin at your own risk.
