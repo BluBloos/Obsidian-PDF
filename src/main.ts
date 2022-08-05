@@ -1,7 +1,6 @@
 /* Things to fix before publishing as a legit Obsidian plugin. */
 // TODO(Noah): If the PDF file has changed since last, rerun the extract algo. Remove the overwrite (should never 
 // overwrite the data of users).
-// TODO(Noah): Add unload and remove all our hooks.
 // TODO(Noah): Remove all uses of Workspace.activeLeaf.
 // TODO(Noah): If we can, get ride of all use cases of .adapter
 // TODO(Noah): Remove things from the bundle if you can -> esbuild exclude stuff.
@@ -15,7 +14,7 @@
 // TODO(Noah): Figure out how we can sensibly do headers.
 // TODO(Noah): When there is major loading going on ... add a loading bar.
 
-import { addIcon, FileView, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
+import { addIcon, FileView, Plugin, TFile, Workspace, WorkspaceLeaf } from 'obsidian';
 //import pdf2md from '@opendocsg/pdf2md'
 import * as pdfjs from "pdfjs-dist";
 //import * as worker from "pdfjs-dist/build/pdf.worker.entry.js";
@@ -94,6 +93,28 @@ export default class ObsidianPDF extends Plugin {
         }
     }
 
+    closePDF() {
+        this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
+            if (leaf.getViewState().type === "pdf" || leaf.getViewState().type === "markdown") {
+                if ((leaf.view as FileView).file == this.mdFile) {
+                    leaf.detach();
+                } else if ((leaf.view as FileView).file == this.pdfFile) {
+                    leaf.detach();
+                }
+            }
+        });
+    }
+
+    async unload() {
+        this.app.workspace.off('active-leaf-change', (leaf : WorkspaceLeaf) => {
+            /* Close PDF. */
+            this.closePDF();
+            this.pairOpen = false;
+            this.pdfFile = null;
+            this.mdFile = null;
+        });
+    }
+
     async onload() {
         
         this.pairOpen = false;
@@ -119,15 +140,7 @@ export default class ObsidianPDF extends Plugin {
                 let ok = foundMdLeaf && foundPdfLeaf;
                 // If either of our leaves are no longer present, we must "close" the PDF file.
                 if (!ok) {
-                    this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
-                        if (leaf.getViewState().type === "pdf" || leaf.getViewState().type === "markdown") {
-                            if ((leaf.view as FileView).file == this.mdFile) {
-                                leaf.detach();
-                            } else if ((leaf.view as FileView).file == this.pdfFile) {
-                                leaf.detach();
-                            }
-                        }
-                    });
+                    this.closePDF();
                 }
                 if (!ok) {
                     this.pdfFile = null;
