@@ -2,7 +2,8 @@
     "compilerOptions": {
         "baseUrl": ".", /* module search path for relative module paths */
         /* For my code, use the most new stuff. */
-        "module": "ESNext", 
+        "module": "ESNext",
+        "allowJs": true,
         "moduleResolution": "nodenext",
         "noImplicitAny": true, /* typescript complains if you did not provide type annoatation */
         "removeComments": true,
