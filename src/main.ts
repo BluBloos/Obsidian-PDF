@@ -148,15 +148,15 @@ export default class ObsidianPDF extends Plugin {
     pdfjs.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.worker.js';
 
-    this.registerEvent(
-        this.app.workspace.on('active-leaf-change', (leaf : WorkspaceLeaf) => {
+    this.registerEvent(this.app.workspace.on(
+        'active-leaf-change', (leaf : WorkspaceLeaf) => {
           if (this.pairOpen) {
             let foundMdLeaf = (this.mdFile == null) ? true : false;
             let foundPdfLeaf = (this.pdfFile == null) ? true : false;
             // Check all leaves to see if our files still exist.
             this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
               if (leaf.getViewState().type === 'pdf' ||
-                leaf.getViewState().type === 'markdown') {
+              leaf.getViewState().type === 'markdown') {
                 if ((leaf.view as FileView).file == this.mdFile) {
                   foundMdLeaf = true;
                 } else if ((leaf.view as FileView).file == this.pdfFile) {
@@ -175,15 +175,16 @@ export default class ObsidianPDF extends Plugin {
               this.mdFile = null;
               this.pairOpen = false;
               if (leaf.getViewState().type === 'pdf' ||
-                leaf.getViewState().type === 'markdown') {
-                // Need to reinvoke a leaf change arbitrarily.
+              leaf.getViewState().type === 'markdown') {
+              // Need to reinvoke a leaf change arbitrarily.
                 this.freshOpenMdPdf(leaf);
               }
             }
           } else {
             this.freshOpenMdPdf(leaf);
           }
-        }));
+        }),
+    );
   }
 
   // TODO(Noah): Can we do some Git magic to replace just those places in the
