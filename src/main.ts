@@ -1,10 +1,10 @@
 /* Things to fix before publishing as a legit Obsidian plugin. */
 // TODO(Noah): If the PDF file has changed since last, rerun the extract algo. Remove the overwrite (should never 
 // overwrite the data of users).
-// TODO(Noah): If we can, get rid of all use cases of .adapter
 // TODO(Noah): Remove things from the bundle if you can -> esbuild exclude stuff.
 // TODO(Noah): Do we have any .then() that we can get rid of and instead have as a await ?
 // TODO(Noah): Add eslint to our build process to have it give us suggestions for how to improve.
+// TODO(Noah): Get rid of debug print statements.
 /* Things to fix before publishing as a legit Obsidian plugin. */
 
 // TODO(Noah): The worker.js of pdfjs should be bundled with our app over retrieving from a CDN.
@@ -46,7 +46,7 @@ export default class ObsidianPDF extends Plugin {
         return mdPretty;
     }
 
-    freshOpenMdPdf(leaf : WorkspaceLeaf) {
+    async freshOpenMdPdf(leaf : WorkspaceLeaf) {
         if (leaf.getViewState().type == "pdf") {
             this.pairOpen = true;
             // We automatically know that we need to open the companion .md
@@ -57,18 +57,19 @@ export default class ObsidianPDF extends Plugin {
                     newLeaf = false;
                 }
             });
-            this.app.workspace.openLinkText(mdFilePath, '', newLeaf).then(()=> {  
-                this.pdfFile = (leaf.view as FileView).file;
-                this.mdFile = this.app.workspace.getActiveViewOfType(FileView).file;
-                console.log("this.pdfFile:", this.pdfFile);
-                console.log("this.mdFile:", this.mdFile);
-                // check to see if we need to overwrite the mdFile
-                this.app.vault.adapter.read(mdFilePath).then((mdFileStr : string) => {
-                    if (!mdFileStr.includes("# PDF Metadata")) {
-                        this.extract();
-                    }
-                });
-            });
+            await this.app.workspace.openLinkText(mdFilePath, '', newLeaf);
+            this.pdfFile = (leaf.view as FileView).file;
+            this.mdFile = this.app.workspace.getActiveViewOfType(FileView).file;
+            console.log("this.pdfFile:", this.pdfFile);
+            console.log("this.mdFile:", this.mdFile);
+            // Check to see if file is corrupted.
+            const file = this.app.vault.getAbstractFileByPath(mdFilePath);
+            if (file instanceof TFile) {
+                let mdFileStr : string = await this.app.vault.read(file);
+                if (!mdFileStr.includes("# PDF Metadata")) {
+                    this.extract();
+                }
+            }
         } else if (leaf.getViewState().type == "markdown") {
             // Does this markdown file link with a .PDF ?
             const pdfFilePath = (leaf.view as FileView).file.name.replace(".md", ".pdf");
@@ -82,12 +83,11 @@ export default class ObsidianPDF extends Plugin {
                     }
                 });
                 // Open it up!
-                this.app.workspace.openLinkText(pdfFilePath, '', newLeaf).then(()=> {
-                    this.pdfFile = this.app.workspace.getActiveViewOfType(FileView).file;
-                    this.mdFile = (leaf.view as FileView).file;
-                    console.log("this.pdfFile:", this.pdfFile);
-                    console.log("this.mdFile:", this.mdFile);
-                });
+                await this.app.workspace.openLinkText(pdfFilePath, '', newLeaf);
+                this.pdfFile = this.app.workspace.getActiveViewOfType(FileView).file;
+                this.mdFile = (leaf.view as FileView).file;
+                console.log("this.pdfFile:", this.pdfFile);
+                console.log("this.mdFile:", this.mdFile);
             }
         }
     }
@@ -195,9 +195,9 @@ export default class ObsidianPDF extends Plugin {
 	}
 
     async saveToFile(filePath: string, mdString: string) {
-		const fileExists = await this.app.vault.adapter.exists(filePath);
-		if (fileExists) {
-			await this.overwriteFile(filePath, mdString);
+		const file = this.app.vault.getAbstractFileByPath(filePath);
+		if (file instanceof TFile) {
+			await this.overwriteFile(file, mdString);
 		} else {
 			await this.app.vault.create(filePath, mdString + "\n# PDF Metadata\n");
 		}
@@ -207,11 +207,14 @@ export default class ObsidianPDF extends Plugin {
      * TODO(Noah): Can we do some Git magic to replace just those places in the document that
      * pertain to the PDF, and leave whatever annotations that you written it?
      */
-	async overwriteFile(filePath: string, note: string) {
-		let existingContent = await this.app.vault.adapter.read(filePath);
+	async overwriteFile(file: TFile, note: string) {
+		let existingContent = await this.app.vault.read(file);
+        if (!existingContent.includes("# PDF Metadata")) {
+            existingContent += "\n# PDF Metadata";
+        }
         let _existingContent = existingContent.split("# PDF Metadata");
         let userContent = (_existingContent.length > 1) ? _existingContent[1] : "";
-		await this.app.vault.adapter.write(filePath, note + "\n# PDF Metadata" + userContent);
+		await this.app.vault.modify(file, note + "\n# PDF Metadata" + userContent);
 	}
 };
 
