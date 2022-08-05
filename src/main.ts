@@ -3,7 +3,6 @@
 // overwrite the data of users).
 // TODO(Noah): Remove things from the bundle if you can -> esbuild exclude stuff.
 // TODO(Noah): Add eslint to our build process to have it give us suggestions for how to improve.
-// TODO(Noah): Get rid of debug print statements.
 /* Things to fix before publishing as a legit Obsidian plugin. */
 
 // TODO(Noah): The worker.js of pdfjs should be bundled with our app over retrieving from a CDN.
@@ -59,8 +58,6 @@ export default class ObsidianPDF extends Plugin {
             await this.app.workspace.openLinkText(mdFilePath, '', newLeaf);
             this.pdfFile = (leaf.view as FileView).file;
             this.mdFile = this.app.workspace.getActiveViewOfType(FileView).file;
-            console.log("this.pdfFile:", this.pdfFile);
-            console.log("this.mdFile:", this.mdFile);
             // Check to see if file is corrupted.
             const file = this.app.vault.getAbstractFileByPath(mdFilePath);
             if (file instanceof TFile) {
@@ -85,8 +82,6 @@ export default class ObsidianPDF extends Plugin {
                 await this.app.workspace.openLinkText(pdfFilePath, '', newLeaf);
                 this.pdfFile = this.app.workspace.getActiveViewOfType(FileView).file;
                 this.mdFile = (leaf.view as FileView).file;
-                console.log("this.pdfFile:", this.pdfFile);
-                console.log("this.mdFile:", this.mdFile);
             }
         }
     }
@@ -121,7 +116,6 @@ export default class ObsidianPDF extends Plugin {
         pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.worker.js";
 
         this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf : WorkspaceLeaf) => {
-            console.log("active-leaf-change event triggered with leaf type = ", leaf.getViewState().type);
             if (this.isPairOpen()) {
                 let foundMdLeaf = (this.mdFile == null) ? true : false;
                 let foundPdfLeaf = (this.pdfFile == null) ? true : false;
@@ -161,24 +155,14 @@ export default class ObsidianPDF extends Plugin {
             if(file === null) return;
             if(file.extension !== 'pdf') return;
             let arrayBuffer = await this.app.vault.readBinary(file);
-            console.log("typeof arrayBuffer === \"object\"", typeof arrayBuffer === "object");
-            console.log("arrayBuffer !== null", arrayBuffer !== null);
-            console.log("arrayBuffer.byteLength", arrayBuffer.byteLength !== undefined);
             const buffer = Buffer.from(arrayBuffer);
             let doc = await pdfjs.getDocument(buffer).promise;
             let resultMD = "";
-            console.log("doc.numPages", doc.numPages);
             for (let i : number = 1; i <= doc.numPages; i++) {
                 resultMD += `\n# Page ${i}\n`; // Page divider.
                 let page : PDFPageProxy = await doc.getPage(i);
-                // debug time!
-                let annotations = page.getAnnotations();
-                console.log("annotations", annotations);
-                let structTree = await page.getStructTree();
-                console.log("structTree", structTree);
                 // process page
                 let textContent = await page.getTextContent();
-                console.log("textContent", textContent); 
                 textContent.items.forEach(item => {
                     // @ts-ignore
                     if (item.str != undefined) {
