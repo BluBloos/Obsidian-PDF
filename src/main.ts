@@ -1,6 +1,5 @@
 /* Things to fix before publishing as a legit Obsidian plugin. */
-// TODO(Noah): If the PDF file has changed since last, rerun the extract algo.
-//     Remove the overwrite (should never overwrite the data of users).
+// TODO(Noah): Remove all cases of user data loss.
 /* Things to fix before publishing as a legit Obsidian plugin. */
 
 // TODO(Noah): The worker.js of pdfjs should be bundled with our app over
@@ -10,8 +9,22 @@
 //     and a "PDF file" is already open.
 // TODO(Noah): Figure out how we can sensibly do headers.
 // TODO(Noah): When there is major loading going on ... add a loading bar.
+//     i.e. change the semantics surrounding plugin speed impact.
 
-import {addIcon, FileView, Plugin, TFile, WorkspaceLeaf} from 'obsidian';
+/*
+How should the PDF updating process work?
+- We have access to the file modified time.
+- We could store a thing in our app memory -> last time that WE,
+the Obsidian-PDF plugin, have processed the PDF.
+- We simply need to compare the modified time with the time
+that we have recorded to see if they are different. If they are,
+do the extract and update the mtime cache.
+- We're not going to register any hooks. Simply run this logic
+whenever we open a "PDF object".
+*/
+
+import
+{addIcon, FileView, Plugin, TFile, WorkspaceLeaf, Notice} from 'obsidian';
 import * as pdfjs from 'pdfjs-dist';
 import {PDFPageProxy} from 'pdfjs-dist/types/src/display/api';
 
@@ -80,12 +93,20 @@ export default class ObsidianPDF extends Plugin {
       this.pdfFile = (leaf.view as FileView).file;
       this.mdFile =
         this.app.workspace.getActiveViewOfType(FileView).file;
-      // Check to see if file is corrupted.
+      // Check to see if file requies updating.
       const file = this.app.vault.getAbstractFileByPath(mdFilePath);
       if (file instanceof TFile) {
         const mdFileStr : string = await this.app.vault.read(file);
-        if (!mdFileStr.includes('# PDF Metadata')) {
-          this.extract();
+        const reMatches = mdFileStr.match(/modifiedDate: \d+/);
+        if (reMatches == null) {
+          new Notice('WARNING from Obsidian-PDF: The yaml frontmatter of ' +
+            'your .md is corrupted. Please fix by adding the modifiedDate' +
+            ' key with a number value in UTC time.');
+        } else {
+          const mdTime = Number(reMatches[0].substring(14).toString());
+          if ((leaf.view as FileView).file.stat.mtime !== mdTime) {
+            this.extract();
+          }
         }
       }
     } else if (leaf.getViewState().type == 'markdown') {
@@ -207,7 +228,7 @@ export default class ObsidianPDF extends Plugin {
       const arrayBuffer = await this.app.vault.readBinary(pdfFile);
       const buffer = Buffer.from(arrayBuffer);
       const doc = await pdfjs.getDocument(buffer).promise;
-      let resultMD = '';
+      let resultMD = `---\nmodifiedDate: ${pdfFile.stat.mtime}\n---\n`;
       for (let i : number = 1; i <= doc.numPages; i++) {
         resultMD += `\n# Page ${i}\n`; // Page divider.
         const page : PDFPageProxy = await doc.getPage(i);
@@ -226,15 +247,18 @@ export default class ObsidianPDF extends Plugin {
       const mdFilePath = pdfFile.name.replace('.pdf', '.md');
       const mdFile = this.app.vault.getAbstractFileByPath(mdFilePath);
       if (mdFile instanceof TFile) {
-        let existingContent = await this.app.vault.read(mdFile);
+        const existingContent = await this.app.vault.read(mdFile);
         if (!existingContent.includes('# PDF Metadata')) {
-          existingContent += '\n# PDF Metadata';
+          new Notice('WARNING from Obsidian-PDF: Your .md is corrupted.' +
+            ' Please fix by adding \"# PDF Metadata\" and including' +
+            ' your user data afterwards.');
+        } else {
+          const _existingContent = existingContent.split('# PDF Metadata');
+          const userContent =
+            (_existingContent.length > 1) ? _existingContent[1] : '';
+          await this.app.vault.modify(
+              mdFile, prettyMD + '\n# PDF Metadata' + userContent);
         }
-        const _existingContent = existingContent.split('# PDF Metadata');
-        const userContent =
-          (_existingContent.length > 1) ? _existingContent[1] : '';
-        await this.app.vault.modify(
-            mdFile, prettyMD + '\n# PDF Metadata' + userContent);
       } else {
         await this.app.vault.create(
             mdFilePath, prettyMD + '\n# PDF Metadata\n');

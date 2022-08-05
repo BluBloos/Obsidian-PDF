@@ -7,6 +7,7 @@
         "moduleResolution": "nodenext",
         "noImplicitAny": true, /* typescript complains if you did not provide type annoatation */
         "removeComments": true,
+        "allowSyntheticDefaultImports": true,
         "preserveConstEnums": true, /* const enums provide a way to reduce the overall memory footprint of your application at runtime by emitting the enum value instead of a reference. */
         "lib": [ /* type script type definition to use */
             "DOM",
