@@ -2,10 +2,9 @@
     "id": "obsidian-pdf",
     "name": "Obsidian-PDF",
     "author": "Noah Cabral",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "minAppVersion": "0.11.13",
-    "description": "Treats PDF files as first-class citizens.",
+    "description": "Treats PDF files as first-class citizens, where each PDF is a pairing of a .pdf and .md file.",
     "authorUrl": "https://github.com/BluBloos/Obsidian-PDF",
-    "isDesktopOnly": true,
-    "js": "main.js"
+    "isDesktopOnly": true
 }
