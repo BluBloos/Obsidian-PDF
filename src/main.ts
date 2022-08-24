@@ -6,6 +6,9 @@
 // TODO(Noah): Figure out how we can sensibly do headers.
 // TODO(Noah): When there is major loading going on ... add a loading bar.
 //     i.e. change the semantics surrounding plugin speed impact.
+// TODO(Noah): Add a new leaf type to Obsidian for our "PDF file" thing (which is 
+//    really two leaf nodes). This type of idea will give us parity with current
+//    plugin impl, but it will be a "cleaner" impl.
 
 import
 {addIcon, FileView, Plugin, TFile, WorkspaceLeaf, Notice} from 'obsidian';
