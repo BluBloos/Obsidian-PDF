@@ -13,3 +13,8 @@ the "PDF Metadata" heading.
 be overwritten each time the PDF changes.
 
 Please use this plugin at your own risk.
+
+## Attributions
+
+- pdfjs: https://github.com/mozilla/pdf.js/blob/master/LICENSE
+  - licensed under the Apache 2.0 license.
