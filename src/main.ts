@@ -10,7 +10,7 @@
 import
 {addIcon, FileView, Plugin, TFile, WorkspaceLeaf, Notice} from 'obsidian';
 import * as pdfjs from 'pdfjs-dist';
-import {PDFPageProxy} from 'pdfjs-dist/types/src/display/api';
+// import {PDFPageProxy} from 'pdfjs-dist/types/src/display/api';
 
 addIcon('extract', '<path d="M16 71.25L16 24.5C16 19.8056 19.8056 16 24.5' +
   '16L71.25 16C75.9444 16 79.75 19.8056 79.75 24.5L79.75 41.5L71.25' +
@@ -195,6 +195,8 @@ export default class ObsidianPDF extends Plugin {
   // TODO(Noah): Can we do some Git magic to replace just those places in the
   // document that pertain to the PDF, and leave whatever annotations that you
   // written it?
+  // TODO(Noah): Currently disabling PDF text extraction as output can be
+  // borked sometimes. Will enable again once more robust.
   /**
    * Provided that a "PDF object" is currently open, parse the PDF binary
    * for text and convert to markdown. Update the corresponding .md with
@@ -209,10 +211,10 @@ export default class ObsidianPDF extends Plugin {
       const pdfFile = this.pdfFile;
       if (pdfFile === null) return;
       if (pdfFile.extension !== 'pdf') return;
-      const arrayBuffer = await this.app.vault.readBinary(pdfFile);
+      const resultMD = `---\nmodifiedDate: ${pdfFile.stat.mtime}\n---\n`;
+      /* const arrayBuffer = await this.app.vault.readBinary(pdfFile);
       const buffer = Buffer.from(arrayBuffer);
       const doc = await pdfjs.getDocument(buffer).promise;
-      let resultMD = `---\nmodifiedDate: ${pdfFile.stat.mtime}\n---\n`;
       for (let i : number = 1; i <= doc.numPages; i++) {
         resultMD += `\n# Page ${i}\n`; // Page divider.
         const page : PDFPageProxy = await doc.getPage(i);
@@ -226,7 +228,7 @@ export default class ObsidianPDF extends Plugin {
           }
         });
         // TODO(Noah): Add the marked content consideration.
-      }
+      }*/
       const prettyMD = this.prettyPrintMd(resultMD);
       const mdFilePath = pdfFile.name.replace('.pdf', '.md');
       const mdFile = this.app.vault.getAbstractFileByPath(mdFilePath);
