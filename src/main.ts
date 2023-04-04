@@ -156,6 +156,7 @@ export default class ObsidianPDF extends Plugin {
     this.registerEvent(this.app.workspace.on(
         'active-leaf-change', (leaf : WorkspaceLeaf) => {
           if (this.pairOpen) {
+            // TODO(Noah): Add support for multiple "PDF files" open at once.
             let foundMdLeaf = (this.mdFile == null) ? true : false;
             let foundPdfLeaf = (this.pdfFile == null) ? true : false;
             // Check all leaves to see if our files still exist.
@@ -174,14 +175,12 @@ export default class ObsidianPDF extends Plugin {
             // we must "close" the PDF file.
             if (!ok) {
               this.closePDF();
-            }
-            if (!ok) {
               this.pdfFile = null;
               this.mdFile = null;
               this.pairOpen = false;
               if (leaf.getViewState().type === 'pdf' ||
               leaf.getViewState().type === 'markdown') {
-              // Need to reinvoke a leaf change arbitrarily.
+                // Need to reinvoke a leaf change arbitrarily.
                 this.freshOpenMdPdf(leaf);
               }
             }
