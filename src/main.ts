@@ -67,12 +67,7 @@ export default class ObsidianPDF extends Plugin {
       // We automatically know that we need to open the companion .md
       const mdFilePath =
         (leaf.view as FileView).file.name.replace('.pdf', '.md');
-      let newLeaf = true;
-      this.app.workspace.iterateAllLeaves((leaf : WorkspaceLeaf) => {
-        if (leaf.getViewState().type == 'markdown') {
-          newLeaf = false;
-        }
-      });
+      const newLeaf = true;
       await this.app.workspace.openLinkText(mdFilePath, '', newLeaf);
       this.pdfFile = (leaf.view as FileView).file;
       this.mdFile =
